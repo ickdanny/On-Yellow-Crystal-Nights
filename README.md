@@ -51,7 +51,7 @@ Install OYCN as follows on Windows using Powershell:
 ```
 git clone https://www.github.com/ickdanny/On-Yellow-Crystal-Nights
 cd On-Yellow-Crystal-Nights
-.\build.ps1
+.\build_windows.ps1
 ```
 
 ### Mac
