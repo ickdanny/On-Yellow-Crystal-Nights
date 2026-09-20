@@ -8,6 +8,7 @@
 /* Prints the given error message but does not exit */
 void pgWarning(const char *warningMsg){
     fprintf(stderr, "%s\n", warningMsg);
+    fflush(stderr);
 }
 
 /* Prints the given error message and exits */

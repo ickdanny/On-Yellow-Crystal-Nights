@@ -133,6 +133,8 @@ void sleepUntil(TimePoint timePoint){
 
 #ifdef WIN32
 
+#include <threads.h> // for thread_local
+
 /* 
  * Returns TimePoint representing the specified number
  * of nanoseconds
@@ -149,9 +151,11 @@ TimePoint getCurrentTime(){
     QueryPerformanceFrequency(&frequency);
     QueryPerformanceCounter(&count);
 
-    count.QuadPart *= _oneBillion;
-    count.QuadPart /= frequency.QuadPart;
-    return count.QuadPart;
+    double time = (double)(count.QuadPart);
+    time *= (double)_oneBillion;
+    time /= (double)(frequency.QuadPart);
+
+    return (TimePoint)time;
 }
 
 /* 
@@ -193,7 +197,7 @@ int64_t timePointDiffNano(
 }
 
 /* Sleeps until the specified TimePoint */
-void sleepUntil(TimePoint timePoint){
+void sleepUntil(TimePoint timePoint) {
     /* initialize variables */
 
     TimePoint currentTime = getCurrentTime();
@@ -206,20 +210,27 @@ void sleepUntil(TimePoint timePoint){
         return;
     }
 
-    HANDLE timerHandle = CreateWaitableTimer(
-        NULL,
-        true,
-        NULL)
-    ;
-    if(!timerHandle){
-        pgError(
-            "failed to open timer handle; "
-            SRC_LOCATION
-        );
-    }
-
     LARGE_INTEGER timeToWait = {0};
     timeToWait.QuadPart = -timeDiff / 100; /* 100ns */
+
+    if(timeToWait.QuadPart >= 0) {
+        return;
+    }
+
+    static thread_local HANDLE timerHandle = NULL;
+    if(timerHandle == NULL) {
+        timerHandle = CreateWaitableTimer(
+            NULL,
+            true,
+            NULL
+        );
+        if(!timerHandle){
+            pgError(
+                "failed to open timer handle; "
+                SRC_LOCATION
+            );
+        }
+    }
 
     if(!SetWaitableTimer(
         timerHandle,
@@ -233,8 +244,10 @@ void sleepUntil(TimePoint timePoint){
     }
 
     WaitForSingleObject(timerHandle, INFINITE);
-
-    CloseHandle(timerHandle);
+    
+    // DO NOT CLEAN UP HANDLE! this is reasonable because
+    // we do not create new threads that call this
+    // function
 }
 
 #endif /* end WIN32 */
