@@ -23,4 +23,4 @@ cp -r build\res EU06_OYCN\res
 cp -r packaging\* EU06_OYCN\
 
 # Zip it up
-# Compress-Archive -Path EU06_OYCN -DestinationPath EU06_OYCN.zip
+Compress-Archive -Path EU06_OYCN -DestinationPath EU06_OYCN.zip
